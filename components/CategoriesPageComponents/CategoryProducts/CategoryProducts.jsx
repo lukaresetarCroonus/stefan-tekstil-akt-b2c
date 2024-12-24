@@ -44,7 +44,6 @@ export const CategoryProducts = ({
 
   //dobijamo proizvode za kategoriju sa api-ja
   const {
-    data: { items: products, pagination },
     data,
     isFetched,
     isFetching,
@@ -59,6 +58,8 @@ export const CategoryProducts = ({
     setPage: setPage,
     render: false,
   });
+
+  const {items: products,pagination} = data;
 
   const { data: gtm_data, isLoading: isLoadingGTM } = useCategoryProducts({
     slug: category_id,
