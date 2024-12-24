@@ -59,8 +59,6 @@ export const CategoryProducts = ({
     render: false,
   });
 
-  const {items: products,pagination} = data;
-
   const { data: gtm_data, isLoading: isLoadingGTM } = useCategoryProducts({
     slug: category_id,
     page: pageKey ?? 1,
@@ -122,9 +120,9 @@ export const CategoryProducts = ({
       page,
     );
 
-    handleNumOfProducts(pagination?.total_items);
+    handleNumOfProducts(data?.pagination?.total_items);
     generateQueryString(sort_tmp, filters_tmp, page_tmp);
-  }, [sort, selectedFilters, page, pagination?.total_items]);
+  }, [sort, selectedFilters, page, data?.pagination?.total_items]);
 
   const mutateFilters = useCategoryFilters({
     slug: category_id,
@@ -243,7 +241,7 @@ export const CategoryProducts = ({
         ref={elementRef}
         className={`max-lg:w-[95%] lg:w-[85%] mx-auto grid grid-cols-1 md:grid-cols-2  gap-x-10 gap-y-10 bg-white pt-12 lg:grid-cols-3 2xl:grid-cols-4`}
       >
-        {(products ?? [])?.map(({ id }) => {
+        {(data.products ?? [])?.map(({ id }) => {
           return (
             <Suspense
               key={id}
