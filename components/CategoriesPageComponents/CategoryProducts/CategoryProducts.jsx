@@ -44,6 +44,7 @@ export const CategoryProducts = ({
 
   //dobijamo proizvode za kategoriju sa api-ja
   const {
+    data: { items: products, pagination },
     data,
     isFetched,
     isFetching,
@@ -59,18 +60,18 @@ export const CategoryProducts = ({
     render: false,
   });
 
-  const { data: gtm_data, isLoading: isLoadingGTM } = useCategoryProducts({
-    slug: category_id,
-    page: pageKey ?? 1,
-    limit: limit,
-    sort: sortKey ?? "_",
-    setSelectedFilters,
-    filterKey,
-    setSort,
-    setPage: setPage,
-    render: true,
-    isGTM: true,
-  });
+  // const { data: gtm_data, isLoading: isLoadingGTM } = useCategoryProducts({
+  //   slug: category_id,
+  //   page: pageKey ?? 1,
+  //   limit: limit,
+  //   sort: sortKey ?? "_",
+  //   setSelectedFilters,
+  //   filterKey,
+  //   setSort,
+  //   setPage: setPage,
+  //   render: true,
+  //   isGTM: true,
+  // });
 
   // azuriramo query parametre sa selektovanim sortom, stranicom i filterima
   const updateURLQuery = (sort, selectedFilters, page) => {
@@ -120,9 +121,9 @@ export const CategoryProducts = ({
       page,
     );
 
-    handleNumOfProducts(data?.pagination?.total_items);
+    handleNumOfProducts(pagination?.total_items);
     generateQueryString(sort_tmp, filters_tmp, page_tmp);
-  }, [sort, selectedFilters, page, data?.pagination?.total_items]);
+  }, [sort, selectedFilters, page, pagination?.total_items]);
 
   const mutateFilters = useCategoryFilters({
     slug: category_id,
@@ -185,34 +186,34 @@ export const CategoryProducts = ({
     }
   };
 
-  useEffect(() => {
-    if (!isLoadingGTM) {
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({
-        ecommerce: null,
-      });
-      process?.env?.GTM_ENABLED === "true" &&
-        window?.dataLayer?.push({
-          event: "view_item_list",
-          ecommerce: {
-            item_list_id: "related_products",
-            item_list_name: "Related products",
-            currency: "RSD",
-            items: gtm_data?.items?.map((item, index) => {
-              return {
-                item_id: item?.basic_data?.id_product,
-                item_name: item?.basic_data?.name,
-                price: `${renderPrices(item)}`,
-                item_category1: item?.categories?.[0]?.name ?? "",
-                discount:
-                  item?.price?.discount?.active &&
-                  item?.price?.discount?.amount,
-              };
-            }),
-          },
-        });
-    }
-  }, [gtm_data?.pagination, isLoadingGTM]);
+  // useEffect(() => {
+  //   if (!isLoadingGTM) {
+  //     window.dataLayer = window.dataLayer || [];
+  //     window.dataLayer.push({
+  //       ecommerce: null,
+  //     });
+  //     process?.env?.GTM_ENABLED === "true" &&
+  //       window?.dataLayer?.push({
+  //         event: "view_item_list",
+  //         ecommerce: {
+  //           item_list_id: "related_products",
+  //           item_list_name: "Related products",
+  //           currency: "RSD",
+  //           items: gtm_data?.items?.map((item, index) => {
+  //             return {
+  //               item_id: item?.basic_data?.id_product,
+  //               item_name: item?.basic_data?.name,
+  //               price: `${renderPrices(item)}`,
+  //               item_category1: item?.categories?.[0]?.name ?? "",
+  //               discount:
+  //                 item?.price?.discount?.active &&
+  //                 item?.price?.discount?.amount,
+  //             };
+  //           }),
+  //         },
+  //       });
+  //   }
+  // }, [gtm_data?.pagination, isLoadingGTM]);
 
   const getPaginationArray = (selectedPage, totalPages) => {
     const start = Math.max(1, selectedPage - 2);
@@ -241,7 +242,7 @@ export const CategoryProducts = ({
         ref={elementRef}
         className={`max-lg:w-[95%] lg:w-[85%] mx-auto grid grid-cols-1 md:grid-cols-2  gap-x-10 gap-y-10 bg-white pt-12 lg:grid-cols-3 2xl:grid-cols-4`}
       >
-        {(data?.products ?? [])?.map(({ id }) => {
+        {(products ?? [])?.map(({ id }) => {
           return (
             <Suspense
               key={id}
