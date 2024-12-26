@@ -1,71 +1,188 @@
-"use client";
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+import { useKeenSlider } from "keen-slider/react";
+import "keen-slider/keen-slider.min.css";
 import Image from "next/image";
 import { convertHttpToHttps } from "@/helpers/convertHttpToHttps";
 import Link from "next/link";
+import { useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
+import { Autoplay } from "swiper/modules";
+import "swiper/css/autoplay";
 
-const BannerSlider = ({ banners }) => {
+function extractYoutubeId(url) {
+  const regex =
+    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
+}
+
+const ImageSliderLoop = ({ bannerimages, updateImage }) => {
   const [swiper, setSwiper] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const items = banners?.map((item, index) => (
-    <SwiperSlide key={index} className={`!grid !grid-cols-2`}>
-      <div className="col-span-2 max-lg:py-8 lg:col-span-1 w-full h-full flex max-lg:items-start items-center justify-start bg-[#eeefe1] ">
-        {/*<h2 className="text-[1.661rem] text-black font-semibold pb-5 max-md:text-[1.1rem] absolute top-0 z-[20] lg:hidden">*/}
-        {/*  {item?.title}*/}
-        {/*</h2>*/}
-        <div className="flex flex-col max-lg:items-start gap-5 lg:gap-10 max-lg:w-full max-md:px-2 max-lg:pr-5 w-[80%] mx-auto px-0 md:px-5">
-          <h2 className="text-[1.661rem] max-md:text-[1.1rem] text-croonus-1 font-medium text-center lg:text-left">
-            {item?.title}
-          </h2>
-          <p className="text-[1rem] max-md:text-[0.8rem] font-normal text-black text-left max-lg:py-4 max-md:py-0">
-            {item?.text}
-          </p>
-          <Link
-            href={`${item?.url}`}
-            className="bg-croonus-1 text-white text-xs md:text-base font-normal px-4 py-2 max-w-max"
+  const renderSlideContent = (item, index) => {
+    switch (item?.type) {
+      case "video":
+        return (
+          <SwiperSlide
+            key={index}
+            className={`w-full relative flex items-center flex-col`}
           >
-            {item?.button}
-          </Link>
-        </div>
-      </div>
-      <div className="col-span-2  relative max-lg:row-start-1 lg:col-span-1 max-lg:h-[300px] max-h-[600px]  h-[600px]">
-        <Image
-          src={convertHttpToHttps(item?.image)}
-          fill
-          alt="AKT"
-          className="object-cover max-md:pt-[3rem]"
-        />
-      </div>
-    </SwiperSlide>
-  ));
+            <Link href={item?.url ?? "/"}>
+              <video
+                width={item?.file_data?.banner_position?.width}
+                height={item?.file_data?.banner_position?.height}
+                className="relative object-cover h-full w-full"
+                autoPlay
+                muted
+                loop
+              >
+                <source
+                  src={convertHttpToHttps(item?.file_data?.url)}
+                  type="video/mp4"
+                />
+              </video>
+            </Link>
+            <div className="absolute flex flex-col gap-3 items-center top-[60%]">
+              <h2 className="text-3xl text-croonus-1 text-center text-white">
+                {item?.title}
+              </h2>
+              <div className={`w-[80%] mx-auto`}>
+                <p className="text-base text-center text-croonus-1">
+                  {item?.text}
+                </p>
+              </div>
+              {item?.button && (
+                <Link href={`${item?.url}`}>
+                  <button className="px-6 py-2 text-xl bg-croonus-1 text-white hover:bg-opacity-80">
+                    {item?.button}
+                  </button>
+                </Link>
+              )}
+            </div>
+          </SwiperSlide>
+        );
+
+      case "video_link":
+          const videoProvider = item?.video_provider;
+          const videoUrl = item?.video_url;
+    
+          const src =
+      videoProvider === "youtube"
+        ? `https://www.youtube.com/embed/${extractYoutubeId(videoUrl)}?autoplay=1&mute=1&loop=1&playsinline=1&controls=0&playlist=${extractYoutubeId(videoUrl)}`
+        : `${videoUrl}?autoplay=1&muted=1&loop=1&background=1&playsinline=1}`;
+    
+          return (
+            <SwiperSlide
+            key={index}
+            className={`w-full relative flex items-center flex-col`}
+          >
+            <Link href={item?.url ?? "/"}>
+            <iframe
+              className="w-full h-full object-cover aspect-[960/1550] md:aspect-[1920/800] pointer-events-none"
+              width={item.width}
+              height={item.height}
+              src={src}
+              frameborder="0"
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+            </Link>
+            <div className="absolute flex flex-col gap-3 items-center top-[60%]">
+              <h2 className="text-3xl text-croonus-1 text-center text-white">
+                {item?.title}
+              </h2>
+              <div className={`w-[80%] mx-auto`}>
+                <p className="text-base text-center text-croonus-1">
+                  {item?.text}
+                </p>
+              </div>
+              {item?.button && (
+                <Link href={`${item?.url}`}>
+                  <button className="px-6 py-2 text-xl bg-croonus-1 text-white hover:bg-opacity-80">
+                    {item?.button}
+                  </button>
+                </Link>
+              )}
+            </div>
+          </SwiperSlide>
+          );
+      default:
+        return (
+          <SwiperSlide
+            key={index}
+            className={`w-full relative flex items-center flex-col`}
+          >
+            <Link href={item?.url ?? "/"}>
+              <Image
+                width={0}
+                height={0}
+                className="relative h-auto w-full"
+                src={convertHttpToHttps(item?.file_data?.url)}
+                alt={item?.file_data?.descriptions?.alt ?? "AKT"}
+                priority={true}
+              />
+            </Link>
+            <div className="absolute flex flex-col gap-3 items-center top-[60%]">
+              <h2 className="text-3xl text-croonus-1 text-center text-white">
+                {item?.title}
+              </h2>
+              <div className={`w-[80%] mx-auto`}>
+                <p className="text-base text-center text-croonus-1">
+                  {item?.text}
+                </p>
+              </div>
+              {item?.button && (
+                <Link href={`${item?.url}`}>
+                  <button className="px-6 py-2 text-xl bg-croonus-1 text-white hover:bg-opacity-80">
+                    {item?.button}
+                  </button>
+                </Link>
+              )}
+            </div>
+          </SwiperSlide>
+        );
+    }
+  };
+
+  const slides = bannerimages?.map((item, index) =>
+    renderSlideContent(item, index),
+  );
 
   return (
-    <>
-      <div className="mt-24 max-lg:mt-16 navigation-wrapper w-[95%] lg:w-[65%] mx-auto ">
-        <Swiper
-          onSlideChange={(swiper) => setActiveIndex(swiper?.activeIndex)}
-          onSwiper={(swiper) => setSwiper(swiper)}
-        >
-          {items}
-        </Swiper>
-      </div>
-      <div className="dots2 mt-3">
-        {banners?.map((idx, i) => {
-          return (
+    <div className="mx-auto w-[95%] lg:w-[80%] overflow-visible max-md:mt-0 mt-[1.313rem]">
+      <Swiper
+        onSlideChange={(swiper) => setActiveIndex(swiper?.activeIndex)}
+        modules={[Autoplay]}
+        autoplay={{
+          delay: 3500,
+          pauseOnMouseEnter: true,
+        }}
+        onSwiper={(swiper) => setSwiper(swiper)}
+      >
+        {slides}
+      </Swiper>
+      {bannerimages?.length > 0 && (
+        <div className="dots3 relative flex max-md:justify-center items-center max-md:gap-[3rem] gap-[4.688rem] ml-auto justify-end mt-[1.875rem] text-[1.25rem]">
+          {(bannerimages ?? [])?.map((idx, index) => (
             <button
-              key={i}
+              key={index}
               onClick={() => {
-                swiper?.slideTo(i);
+                swiper.slideTo(index);
+                setActiveIndex(index);
               }}
-              className={"dot2" + (activeIndex === i ? " active" : "")}
-            ></button>
-          );
-        })}
-      </div>
-    </>
+              className={
+                activeIndex === index
+                  ? "underline max-md:text-base"
+                  : "max-md:text-base"
+              }
+            >
+              {idx?.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 
-export default BannerSlider;
+export default ImageSliderLoop;
